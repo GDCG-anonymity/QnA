@@ -23,13 +23,20 @@
 
   <div id="app">
 
-    <a href="index.html" class="workspace" id="workspaceBar">
-      <img src="daydream_logo.png" alt="로고" class="logo-img" id="workspaceLogo">
-      <div>
-        <p class="workspace-name" id="workspaceName">Daydream Inc.</p>
-        <p class="workspace-sub" id="workspaceSub">백일몽 주식회사</p>
-      </div>
-    </a>
+    <header class="workspace" id="workspaceBar">
+      <a href="index.html" class="workspace-brand">
+        <img src="daydream_logo.png" alt="로고" class="logo-img" id="workspaceLogo">
+        <div>
+          <p class="workspace-name" id="workspaceName">Daydream Inc.</p>
+          <p class="workspace-sub" id="workspaceSub">백일몽 주식회사</p>
+        </div>
+      </a>
+      <button type="button" class="bgm-btn" id="bgmBtn" hidden aria-label="배경음악 재생/정지">
+        <svg id="bgmPlayIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="bgmPauseIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" hidden><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
+      </button>
+    </header>
+    <div id="bgmPlayerHolder" style="position:fixed; width:0; height:0; overflow:hidden;"><div id="bgmPlayer"></div></div>
 
     <div class="dm-header">
       <div class="dm-left">
@@ -165,6 +172,9 @@
         <label>트위터 프로필 링크</label>
         <input type="text" id="twitterInput" placeholder="https://x.com/아이디">
 
+        <label>배경음악 (유튜브 링크, 선택)</label>
+        <input type="text" id="bgmInput" placeholder="https://youtube.com/watch?v=...">
+
         <label>PC 화면 코너 장식 (여러 개 추가 가능, 사진/움짤)</label>
         <div class="expr-list" id="decoList"></div>
         <div class="expr-add-row">
@@ -210,6 +220,7 @@
     </div>
   </div>
 
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>

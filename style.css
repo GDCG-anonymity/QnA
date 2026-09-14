@@ -40,11 +40,20 @@ html, body {
 
 /* 워크스페이스 바 */
 .workspace {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 12px 20px; background: var(--surface-2);
   border-bottom: 1px solid var(--line); flex-shrink: 0;
-  text-decoration: none; color: inherit; cursor: pointer;
 }
+.workspace-brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: inherit; cursor: pointer; min-width: 0;
+}
+.bgm-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: none;
+  background: var(--surface); color: var(--ink); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.bgm-btn:hover { background: rgba(0,0,0,0.08); }
 .logo-img { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; }
 .workspace-name { font-size: 12px; font-weight: 500; margin: 0; }
 .workspace-sub { font-size: 10px; color: var(--muted); margin: 0; }

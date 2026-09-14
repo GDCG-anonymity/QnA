@@ -20,6 +20,71 @@ if (!boxId) {
 
 const boxRef = db.collection("boxes").doc(boxId);
 
+/* ===== 배경음악 (유튜브) ===== */
+let ytPlayer = null;
+let ytReady = false;
+let bgmPlaying = false;
+let pendingVideoId = null;
+let currentVideoId = null;
+
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+window.onYouTubeIframeAPIReady = function () {
+  ytReady = true;
+  if (pendingVideoId) loadYtVideo(pendingVideoId);
+};
+
+function loadYtVideo(videoId) {
+  if (!ytReady) {
+    pendingVideoId = videoId;
+    return;
+  }
+  if (currentVideoId === videoId && ytPlayer) return;
+  currentVideoId = videoId;
+  if (ytPlayer) {
+    ytPlayer.loadVideoById(videoId);
+    ytPlayer.pauseVideo();
+  } else {
+    ytPlayer = new YT.Player("bgmPlayer", {
+      videoId,
+      playerVars: { autoplay: 0, controls: 0 },
+      events: {
+        onStateChange: (e) => {
+          bgmPlaying = e.data === YT.PlayerState.PLAYING;
+          updateBgmIcon();
+        },
+      },
+    });
+  }
+}
+
+function updateBgmIcon() {
+  el("bgmPlayIcon").hidden = bgmPlaying;
+  el("bgmPauseIcon").hidden = !bgmPlaying;
+}
+
+el("bgmBtn").addEventListener("click", () => {
+  if (!ytPlayer) return;
+  if (bgmPlaying) {
+    ytPlayer.pauseVideo();
+  } else {
+    ytPlayer.playVideo();
+  }
+});
+
 /* ===== 박스 정보(닉네임/테마/색/상태/아바타) ===== */
 boxRef.onSnapshot((doc) => {
   boxData = doc.data();
@@ -62,6 +127,10 @@ boxRef.onSnapshot((doc) => {
   }
 
   el("attachBtn").hidden = !boxData.allowImageAttach;
+
+  const bgmVideoId = extractYouTubeId(boxData.bgmUrl);
+  el("bgmBtn").hidden = !bgmVideoId;
+  if (bgmVideoId) loadYtVideo(bgmVideoId);
 
   renderDecoLayer();
   updateDecoAdjustVisibility();
@@ -695,6 +764,7 @@ el("profileMenuItem").addEventListener("click", () => {
   el("bgPreview").style.backgroundImage = boxData.bgUrl ? `url(${boxData.bgUrl})` : "none";
   el("nicknameInput").value = boxData.nickname || "";
   el("twitterInput").value = boxData.twitterUrl || "";
+  el("bgmInput").value = boxData.bgmUrl || "";
 
   workingExpressions = (boxData.expressions || []).slice();
   el("exprLabelInput").value = "";
@@ -792,6 +862,7 @@ el("profileSubmit").addEventListener("click", async () => {
   try {
     const nickname = el("nicknameInput").value.trim() || "이름 없음";
     const twitterUrl = el("twitterInput").value.trim();
+    const bgmUrl = el("bgmInput").value.trim();
     const activePreset = document.querySelector(".preset-btn.active");
     const activeColor = document.querySelector(".color-swatch.active");
     const showTime = el("showTimeToggle").getAttribute("aria-pressed") === "true";
@@ -800,6 +871,7 @@ el("profileSubmit").addEventListener("click", async () => {
     const update = {
       nickname,
       twitterUrl,
+      bgmUrl,
       color: activeColor ? activeColor.dataset.color : (boxData.color || "#185FA5"),
       status: {
         preset: activePreset ? activePreset.dataset.preset : "근무중",
