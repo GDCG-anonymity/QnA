@@ -81,11 +81,12 @@ function updateBgmIcon() {
 }
 
 function updateBgmTitle() {
-  if (!ytPlayer || typeof ytPlayer.getVideoData !== "function") return;
+  const titleEl = el("bgmTitle");
+  if (!titleEl || !ytPlayer || typeof ytPlayer.getVideoData !== "function") return;
   const data = ytPlayer.getVideoData();
   if (data && data.title) {
-    el("bgmTitle").textContent = data.title;
-    el("bgmTitle").hidden = false;
+    titleEl.textContent = data.title;
+    titleEl.hidden = false;
   }
 }
 
@@ -148,7 +149,8 @@ boxRef.onSnapshot((doc) => {
   if (bgmVideoId) {
     loadYtVideo(bgmVideoId);
   } else {
-    el("bgmTitle").hidden = true;
+    const titleEl = el("bgmTitle");
+    if (titleEl) titleEl.hidden = true;
   }
 
   renderDecoLayer();
