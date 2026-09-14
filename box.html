@@ -31,10 +31,13 @@
           <p class="workspace-sub" id="workspaceSub">백일몽 주식회사</p>
         </div>
       </a>
-      <button type="button" class="bgm-btn" id="bgmBtn" hidden aria-label="배경음악 재생/정지">
-        <svg id="bgmPlayIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        <svg id="bgmPauseIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" hidden><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
-      </button>
+      <div class="bgm-control">
+        <button type="button" class="bgm-btn" id="bgmBtn" hidden aria-label="배경음악 재생/정지">
+          <svg id="bgmPlayIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="bgmPauseIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" hidden><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
+        </button>
+        <span class="bgm-title" id="bgmTitle" hidden></span>
+      </div>
     </header>
     <div id="bgmPlayerHolder" style="position:fixed; width:0; height:0; overflow:hidden;"><div id="bgmPlayer"></div></div>
 

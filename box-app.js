@@ -60,11 +60,13 @@ function loadYtVideo(videoId) {
   } else {
     ytPlayer = new YT.Player("bgmPlayer", {
       videoId,
-      playerVars: { autoplay: 0, controls: 0 },
+      playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: videoId },
       events: {
+        onReady: () => updateBgmTitle(),
         onStateChange: (e) => {
           bgmPlaying = e.data === YT.PlayerState.PLAYING;
           updateBgmIcon();
+          updateBgmTitle();
         },
       },
     });
@@ -74,6 +76,15 @@ function loadYtVideo(videoId) {
 function updateBgmIcon() {
   el("bgmPlayIcon").hidden = bgmPlaying;
   el("bgmPauseIcon").hidden = !bgmPlaying;
+}
+
+function updateBgmTitle() {
+  if (!ytPlayer || typeof ytPlayer.getVideoData !== "function") return;
+  const data = ytPlayer.getVideoData();
+  if (data && data.title) {
+    el("bgmTitle").textContent = data.title;
+    el("bgmTitle").hidden = false;
+  }
 }
 
 el("bgmBtn").addEventListener("click", () => {
@@ -130,7 +141,11 @@ boxRef.onSnapshot((doc) => {
 
   const bgmVideoId = extractYouTubeId(boxData.bgmUrl);
   el("bgmBtn").hidden = !bgmVideoId;
-  if (bgmVideoId) loadYtVideo(bgmVideoId);
+  if (bgmVideoId) {
+    loadYtVideo(bgmVideoId);
+  } else {
+    el("bgmTitle").hidden = true;
+  }
 
   renderDecoLayer();
   updateDecoAdjustVisibility();
