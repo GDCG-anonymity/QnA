@@ -59,6 +59,8 @@ function loadYtVideo(videoId) {
     ytPlayer.pauseVideo();
   } else {
     ytPlayer = new YT.Player("bgmPlayer", {
+      width: "2",
+      height: "2",
       videoId,
       playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: videoId },
       events: {
@@ -92,6 +94,8 @@ el("bgmBtn").addEventListener("click", () => {
   if (bgmPlaying) {
     ytPlayer.pauseVideo();
   } else {
+    ytPlayer.unMute();
+    ytPlayer.setVolume(100);
     ytPlayer.playVideo();
   }
 });
