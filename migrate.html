@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데이터 이관 (1회용)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="landing">
+    <h1 class="landing-title">예전 데이터 이관</h1>
+    <p class="landing-sub">예전 단일 사용자 버전의 질문/답변을<br>지금 로그인한 계정의 익명함으로 복사합니다</p>
+
+    <form id="loginForm" class="landing-form">
+      <label>아이디</label>
+      <input type="text" id="loginId" placeholder="새로 만든 계정 아이디" required>
+      <label>비밀번호</label>
+      <input type="password" id="loginPw" placeholder="비밀번호" required>
+      <p class="modal-error" id="loginErrorLanding" hidden></p>
+      <button type="submit" class="btn-primary wide">로그인</button>
+    </form>
+
+    <div id="migrateSection" hidden>
+      <p class="landing-sub" id="migrateStatus">예전 데이터 <b id="oldCount">0</b>개를 찾았어요.</p>
+      <button class="btn-primary wide" id="migrateBtn">내 익명함으로 복사하기</button>
+      <p class="modal-error" id="migrateError" hidden></p>
+      <p class="landing-sub" id="migrateDone" hidden>완료! <span id="doneCount"></span>개를 옮겼어요.</p>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="migrate-app.js"></script>
+</body>
+</html>
