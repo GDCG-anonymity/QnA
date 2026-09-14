@@ -706,9 +706,7 @@ el("profileMenuItem").addEventListener("click", () => {
   renderDecoList();
 
   const status = boxData.status || { preset: "근무중", note: "", location: "" };
-  document.querySelectorAll(".preset-btn").forEach((b) => {
-    b.classList.toggle("active", b.dataset.preset === status.preset);
-  });
+  renderPresetRow(boxData.theme, status.preset);
   el("statusNoteInput").value = status.note || "";
   el("locationInput").value = status.location || "";
 
@@ -728,11 +726,23 @@ el("profileBackdrop").addEventListener("click", (e) => {
   if (e.target === el("profileBackdrop")) el("profileBackdrop").classList.remove("open");
 });
 
-document.querySelectorAll(".preset-btn").forEach((b) => {
-  b.addEventListener("click", () => {
-    document.querySelectorAll(".preset-btn").forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-  });
+const PRESET_SETS = {
+  basic: ["온라인", "자리비움", "오프라인"],
+  default: ["근무중", "회의중", "자리비움"],
+};
+
+function renderPresetRow(theme, activePreset) {
+  const presets = theme === "basic" ? PRESET_SETS.basic : PRESET_SETS.default;
+  el("presetRow").innerHTML = presets
+    .map((p) => `<button type="button" class="preset-btn${p === activePreset ? " active" : ""}" data-preset="${p}">${p}</button>`)
+    .join("");
+}
+
+el("presetRow").addEventListener("click", (e) => {
+  const b = e.target.closest(".preset-btn");
+  if (!b) return;
+  el("presetRow").querySelectorAll(".preset-btn").forEach((x) => x.classList.remove("active"));
+  b.classList.add("active");
 });
 
 document.querySelectorAll(".color-swatch").forEach((b) => {
