@@ -98,6 +98,11 @@ function applyTheme(box) {
     root.setProperty("--surface", "#FBFDFE");
     root.setProperty("--surface-2", "#DCE6EE");
     root.setProperty("--line", "#C3D2DC");
+  } else if (box.theme === "basic") {
+    root.setProperty("--page", "#F2F2F0");
+    root.setProperty("--surface", "#FFFFFF");
+    root.setProperty("--surface-2", "#F7F7F5");
+    root.setProperty("--line", "#E5E5E3");
   } else {
     root.removeProperty("--page");
     root.removeProperty("--surface");
@@ -108,6 +113,10 @@ function applyTheme(box) {
     el("workspaceLogo").src = "disaster_logo.png";
     el("workspaceName").textContent = "초자연 재난관리국";
     el("workspaceSub").textContent = "긴급 대응 채널";
+  } else if (box.theme === "basic") {
+    el("workspaceLogo").src = "basic_logo.png";
+    el("workspaceName").textContent = "출근해도 익명으로 대화해야 하는구나";
+    el("workspaceSub").textContent = "익명 질문함";
   } else {
     el("workspaceLogo").src = "daydream_logo.png";
     el("workspaceName").textContent = "Daydream Inc.";

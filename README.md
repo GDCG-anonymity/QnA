@@ -57,6 +57,7 @@ service cloud.firestore {
 - `box.html` + `box-app.js`: 실제 익명 질문함 화면 (`?id=` 파라미터로 어느 박스인지 구분)
 - `style.css`: 공용 스타일 (두 페이지가 같이 씀)
 - `firebase-config.js`: Firebase 프로젝트 설정값
+- `daydream_logo.png` / `disaster_logo.png` / `basic_logo.png`: 테마별 로고 (백일몽 주식회사 / 초자연 재난관리국 / 기본 테마)
 
 ## 3. 계정/아이디 방식
 
