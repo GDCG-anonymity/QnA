@@ -94,10 +94,20 @@ el("bgmBtn").addEventListener("click", () => {
   if (!ytPlayer) return;
   if (bgmPlaying) {
     ytPlayer.pauseVideo();
+    bgmPlaying = false;
+    updateBgmIcon();
   } else {
     ytPlayer.unMute();
     ytPlayer.setVolume(100);
     ytPlayer.playVideo();
+    bgmPlaying = true;
+    updateBgmIcon();
+  }
+});
+
+window.addEventListener("pagehide", () => {
+  if (ytPlayer && typeof ytPlayer.pauseVideo === "function") {
+    ytPlayer.pauseVideo();
   }
 });
 
