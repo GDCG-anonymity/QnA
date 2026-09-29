@@ -342,3 +342,56 @@ html, body {
   border-radius: 16px; padding: 4px 8px; cursor: pointer; font-family: inherit;
 }
 .deco-order-toolbar button:hover { background: rgba(255,255,255,0.2); }
+
+/* 장식 목록(프로필 설정) */
+.deco-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.deco-item { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.deco-item-row { display: flex; align-items: center; gap: 8px; }
+.deco-item-row img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.deco-item-label { flex: 1; font-size: 12px; color: var(--muted); }
+.deco-item-row button {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  padding: 4px; display: flex; align-items: center; justify-content: center;
+}
+.deco-item-row button:hover { color: var(--ink); }
+.deco-settings {
+  margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.deco-settings input[type="text"], .deco-settings textarea {
+  width: 100%; border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 8px; font-size: 12px; font-family: inherit; margin: 0;
+}
+.deco-settings input[type="file"] { font-size: 12px; }
+.deco-settings textarea { resize: vertical; min-height: 50px; }
+.deco-check-row { display: flex; gap: 14px; font-size: 12px; color: var(--ink); }
+.deco-check-row label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.deco-settings-note { font-size: 11px; color: var(--muted); margin: 0; }
+
+/* 장식 클릭 반응 */
+@keyframes decoBounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.15) translateY(-6px); }
+  60% { transform: scale(0.95) translateY(2px); }
+  100% { transform: scale(1); }
+}
+.deco-bounce-anim { animation: decoBounce 0.4s ease; }
+
+@keyframes decoSparkleFly {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+.deco-sparkle {
+  position: fixed; width: 8px; height: 8px; border-radius: 50%;
+  background: #FFD84D; pointer-events: none; z-index: 7;
+  animation: decoSparkleFly 0.6s ease-out forwards;
+}
+
+.deco-speech-bubble {
+  position: fixed; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px;
+  font-size: 12px; max-width: 180px; z-index: 8;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.deco-speech-bubble.show { opacity: 1; }

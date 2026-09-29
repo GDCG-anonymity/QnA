@@ -182,8 +182,74 @@ function renderDecoLayer() {
     img.style.bottom = (d.bottom || 24) + "px";
     img.style.width = (d.width || 120) + "px";
     img.style.zIndex = String(5 + (d.z != null ? d.z : i));
+
+    const hasInteraction = !!(d.linkUrl || d.soundUrl || d.bounce || d.sparkle || (d.quotes && d.quotes.length));
+    if (hasInteraction) {
+      img.style.pointerEvents = "auto";
+      img.style.cursor = "pointer";
+      img.addEventListener("click", () => triggerDecoInteraction(d, img));
+    }
+
     layer.appendChild(img);
   });
+}
+
+function triggerDecoInteraction(d, img) {
+  if (decoAdjustActive) return;
+
+  if (d.bounce) {
+    img.classList.remove("deco-bounce-anim");
+    void img.offsetWidth;
+    img.classList.add("deco-bounce-anim");
+  }
+  if (d.sparkle) {
+    spawnSparkles(img);
+  }
+  if (d.quotes && d.quotes.length) {
+    const quote = d.quotes[Math.floor(Math.random() * d.quotes.length)];
+    showSpeechBubble(img, quote);
+  }
+  if (d.soundUrl) {
+    const audio = new Audio(d.soundUrl);
+    audio.play().catch(() => {});
+  }
+  if (d.linkUrl) {
+    window.open(d.linkUrl, "_blank", "noopener");
+  }
+}
+
+function spawnSparkles(img) {
+  const rect = img.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement("div");
+    s.className = "deco-sparkle";
+    const angle = (Math.PI * 2 * i) / 6 + Math.random() * 0.5;
+    const dist = 30 + Math.random() * 20;
+    s.style.left = cx + "px";
+    s.style.top = cy + "px";
+    s.style.setProperty("--dx", Math.cos(angle) * dist + "px");
+    s.style.setProperty("--dy", Math.sin(angle) * dist + "px");
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 650);
+  }
+}
+
+function showSpeechBubble(img, text) {
+  const rect = img.getBoundingClientRect();
+  const bubble = document.createElement("div");
+  bubble.className = "deco-speech-bubble";
+  bubble.textContent = text;
+  document.body.appendChild(bubble);
+  const bw = bubble.getBoundingClientRect();
+  bubble.style.left = Math.max(4, rect.left + rect.width / 2 - bw.width / 2) + "px";
+  bubble.style.top = Math.max(4, rect.top - bw.height - 10) + "px";
+  requestAnimationFrame(() => bubble.classList.add("show"));
+  setTimeout(() => {
+    bubble.classList.remove("show");
+    setTimeout(() => bubble.remove(), 250);
+  }, 2200);
 }
 
 function updateDecoAdjustVisibility() {
@@ -538,11 +604,6 @@ function enterDecoAdjustMode() {
 
 function exitDecoAdjustMode(save) {
   decoAdjustActive = false;
-  document.querySelectorAll(".corner-deco-item").forEach((img) => {
-    img.style.pointerEvents = "none";
-    img.style.cursor = "";
-    img.style.outline = "";
-  });
   document.querySelectorAll(".deco-resize-handle, .deco-order-toolbar").forEach((n) => n.remove());
   el("decoAdjustDone").classList.remove("visible");
 
@@ -562,6 +623,8 @@ function exitDecoAdjustMode(save) {
       return merged;
     });
     boxRef.update({ decorations: updated });
+  } else {
+    renderDecoLayer();
   }
   adjustZState = [];
 }
@@ -701,23 +764,114 @@ function renderDecoList() {
   const list = el("decoList");
   list.innerHTML = "";
   workingDecorations.forEach((d) => {
-    const chip = document.createElement("span");
-    chip.className = "expr-chip";
+    const item = document.createElement("div");
+    item.className = "deco-item";
+
+    const row = document.createElement("div");
+    row.className = "deco-item-row";
+
     const img = document.createElement("img");
     img.src = d.imageUrl;
     img.alt = "장식";
-    chip.appendChild(img);
+    row.appendChild(img);
+
+    const label = document.createElement("span");
+    label.className = "deco-item-label";
+    const tags = [];
+    if (d.linkUrl) tags.push("링크");
+    if (d.soundUrl) tags.push("소리");
+    if (d.bounce) tags.push("통통");
+    if (d.sparkle) tags.push("반짝");
+    if (d.quotes && d.quotes.length) tags.push("말풍선");
+    label.textContent = tags.length ? tags.join(" · ") : "반응 없음";
+    row.appendChild(label);
+
+    const settingsBtn = document.createElement("button");
+    settingsBtn.type = "button";
+    settingsBtn.setAttribute("aria-label", "장식 설정");
+    settingsBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+    row.appendChild(settingsBtn);
+
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
     removeBtn.setAttribute("aria-label", "장식 삭제");
-    removeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>';
+    removeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>';
     removeBtn.addEventListener("click", () => {
       workingDecorations = workingDecorations.filter((x) => x.id !== d.id);
       renderDecoList();
     });
-    chip.appendChild(removeBtn);
-    list.appendChild(chip);
+    row.appendChild(removeBtn);
+
+    item.appendChild(row);
+
+    const panel = document.createElement("div");
+    panel.className = "deco-settings";
+    panel.hidden = true;
+
+    panel.innerHTML = `
+      <input type="text" placeholder="링크 주소 (선택)" data-field="linkUrl">
+      <input type="file" accept="audio/*" data-field="soundFile">
+      <div class="deco-check-row">
+        <label><input type="checkbox" data-field="bounce"> 통통 튀는 애니메이션</label>
+        <label><input type="checkbox" data-field="sparkle"> 반짝이 효과</label>
+      </div>
+      <textarea placeholder="말풍선 문구 (한 줄에 하나씩, 클릭할 때마다 랜덤으로 하나 표시)" data-field="quotes"></textarea>
+      <p class="deco-settings-note" data-field="soundNote"></p>
+    `;
+
+    const linkInput = panel.querySelector('[data-field="linkUrl"]');
+    linkInput.value = d.linkUrl || "";
+    linkInput.addEventListener("input", () => { d.linkUrl = linkInput.value.trim(); });
+
+    const bounceInput = panel.querySelector('[data-field="bounce"]');
+    bounceInput.checked = !!d.bounce;
+    bounceInput.addEventListener("change", () => { d.bounce = bounceInput.checked; label.textContent = decoTagsLabel(d); });
+
+    const sparkleInput = panel.querySelector('[data-field="sparkle"]');
+    sparkleInput.checked = !!d.sparkle;
+    sparkleInput.addEventListener("change", () => { d.sparkle = sparkleInput.checked; label.textContent = decoTagsLabel(d); });
+
+    const quotesInput = panel.querySelector('[data-field="quotes"]');
+    quotesInput.value = (d.quotes || []).join("\n");
+    quotesInput.addEventListener("input", () => {
+      d.quotes = quotesInput.value.split("\n").map((s) => s.trim()).filter(Boolean);
+    });
+
+    const soundNote = panel.querySelector('[data-field="soundNote"]');
+    soundNote.textContent = d.soundUrl ? "소리 파일 등록됨" : "";
+
+    const soundInput = panel.querySelector('[data-field="soundFile"]');
+    soundInput.addEventListener("change", async () => {
+      const file = soundInput.files[0];
+      if (!file) return;
+      try {
+        d.soundUrl = await fileToDataUrlCapped(file, 300 * 1024, "소리 파일이 너무 커요. 300KB 이하로 줄여서 다시 시도해주세요.");
+        soundNote.textContent = "소리 파일 등록됨";
+        label.textContent = decoTagsLabel(d);
+      } catch (err) {
+        alert(err.message || "소리 파일 처리에 실패했어요.");
+      }
+    });
+
+    settingsBtn.addEventListener("click", () => {
+      panel.hidden = !panel.hidden;
+      renderDecoList.__preserveOpen = panel.hidden ? null : d.id;
+    });
+    if (renderDecoList.__preserveOpen === d.id) panel.hidden = false;
+
+    item.appendChild(panel);
+    list.appendChild(item);
   });
+}
+
+function decoTagsLabel(d) {
+  const tags = [];
+  if (d.linkUrl) tags.push("링크");
+  if (d.soundUrl) tags.push("소리");
+  if (d.bounce) tags.push("통통");
+  if (d.sparkle) tags.push("반짝");
+  if (d.quotes && d.quotes.length) tags.push("말풍선");
+  return tags.length ? tags.join(" · ") : "반응 없음";
 }
 
 el("decoAddBtn").addEventListener("click", async () => {
@@ -735,6 +889,11 @@ el("decoAddBtn").addEventListener("click", async () => {
       centerX: 300 + idx * 24,
       bottom: 24 + idx * 24,
       width: 120,
+      linkUrl: "",
+      soundUrl: "",
+      bounce: false,
+      sparkle: false,
+      quotes: [],
     });
     el("decoFileInput").value = "";
     renderDecoList();
@@ -742,6 +901,19 @@ el("decoAddBtn").addEventListener("click", async () => {
     alert(err.message || "사진 처리에 실패했어요.");
   }
 });
+
+function fileToDataUrlCapped(file, maxBytes, tooBigMessage) {
+  return new Promise((resolve, reject) => {
+    if (file.size > maxBytes) {
+      reject(new Error(tooBigMessage));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
 
 function resizeImageToDataUrl(file, maxSize = 240, quality = 0.85, format = "jpeg") {
   if (file.type === "image/gif") {
@@ -802,8 +974,9 @@ el("profileMenuItem").addEventListener("click", () => {
   el("exprFileInput").value = "";
   renderExprList();
 
-  workingDecorations = (boxData.decorations || []).slice();
+  workingDecorations = (boxData.decorations || []).map((d) => ({ ...d, quotes: (d.quotes || []).slice() }));
   el("decoFileInput").value = "";
+  renderDecoList.__preserveOpen = null;
   renderDecoList();
 
   const status = boxData.status || { preset: "근무중", note: "", location: "" };
