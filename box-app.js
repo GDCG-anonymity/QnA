@@ -607,6 +607,14 @@ function exitDecoAdjustMode(save) {
   document.querySelectorAll(".deco-resize-handle, .deco-order-toolbar").forEach((n) => n.remove());
   el("decoAdjustDone").classList.remove("visible");
 
+  document.querySelectorAll(".corner-deco-item").forEach((img) => {
+    img.style.outline = "";
+    const d = (boxData.decorations || []).find((x) => x.id === img.dataset.id);
+    const hasInteraction = !!(d && (d.linkUrl || d.soundUrl || d.bounce || d.sparkle || (d.quotes && d.quotes.length)));
+    img.style.pointerEvents = hasInteraction ? "auto" : "none";
+    img.style.cursor = hasInteraction ? "pointer" : "";
+  });
+
   if (save) {
     const updated = (boxData.decorations || []).map((d) => {
       const img = document.querySelector(`.corner-deco-item[data-id="${d.id}"]`);
@@ -623,8 +631,6 @@ function exitDecoAdjustMode(save) {
       return merged;
     });
     boxRef.update({ decorations: updated });
-  } else {
-    renderDecoLayer();
   }
   adjustZState = [];
 }
