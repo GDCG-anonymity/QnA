@@ -13,7 +13,35 @@ let isAdmin = false;
 let boxData = null;
 let cachedQuestions = [];
 
-if (!boxId) {
+/* ===== 보안: DB/URL에서 온 값 검증 헬퍼 ===== */
+const BOX_ID_RE = /^[A-Za-z0-9_-]{10,128}$/;
+
+function safeHttpUrl(u) {
+  if (typeof u !== "string" || u.length > 500) return "";
+  try {
+    const url = new URL(u.trim());
+    return (url.protocol === "https:" || url.protocol === "http:") ? url.href : "";
+  } catch (e) { return ""; }
+}
+function safeImg(u) {
+  if (typeof u !== "string" || u.length > 1500000) return "";
+  return /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+\/=]+$/.test(u) ? u : "";
+}
+function safeAudio(u) {
+  if (typeof u !== "string" || u.length > 600000) return "";
+  return /^data:audio\/[A-Za-z0-9.+-]+(;[A-Za-z0-9=.+-]+)*;base64,[A-Za-z0-9+\/=]+$/.test(u) ? u : "";
+}
+function cssUrl(u) {
+  const v = safeImg(u);
+  return v ? `url("${v}")` : "none";
+}
+function normalizeHttpUrl(raw) {
+  const t = (raw || "").trim();
+  if (!t) return "";
+  return safeHttpUrl(/^[a-z][a-z0-9+.-]*:/i.test(t) ? t : "https://" + t);
+}
+
+if (!boxId || !BOX_ID_RE.test(boxId)) {
   document.body.innerHTML = '<p style="padding:40px 20px; text-align:center; color:#78766F;">잘못된 링크예요. 익명함 주소를 다시 확인해주세요.</p>';
   throw new Error("no box id");
 }
@@ -128,24 +156,25 @@ boxRef.onSnapshot((doc) => {
   if (status.location) statusLine += ` · ${status.location}`;
   el("statusLine").textContent = statusLine;
 
-  if (boxData.avatarUrl) {
-    el("mainAvatar").style.backgroundImage = `url(${boxData.avatarUrl})`;
+  if (safeImg(boxData.avatarUrl)) {
+    el("mainAvatar").style.backgroundImage = cssUrl(boxData.avatarUrl);
     el("mainAvatar").textContent = "";
   } else {
     el("mainAvatar").style.backgroundImage = "none";
     el("mainAvatar").textContent = (boxData.nickname || "?").charAt(0);
   }
 
-  if (boxData.twitterUrl) {
+  const safeTwitter = safeHttpUrl(boxData.twitterUrl);
+  if (safeTwitter) {
     el("mainAvatar").style.cursor = "pointer";
-    el("mainAvatar").onclick = () => window.open(boxData.twitterUrl, "_blank", "noopener");
+    el("mainAvatar").onclick = () => window.open(safeTwitter, "_blank", "noopener");
   } else {
     el("mainAvatar").style.cursor = "default";
     el("mainAvatar").onclick = null;
   }
 
-  if (boxData.bgUrl) {
-    el("app").style.backgroundImage = `linear-gradient(rgba(255,255,255,0.82), rgba(255,255,255,0.82)), url(${boxData.bgUrl})`;
+  if (safeImg(boxData.bgUrl)) {
+    el("app").style.backgroundImage = `linear-gradient(rgba(255,255,255,0.82), rgba(255,255,255,0.82)), ${cssUrl(boxData.bgUrl)}`;
     el("app").style.backgroundSize = "cover, cover";
     el("app").style.backgroundPosition = "center, center";
   } else {
@@ -174,7 +203,9 @@ function renderDecoLayer() {
   (boxData.decorations || []).forEach((d, i) => {
     const img = document.createElement("img");
     img.className = "corner-deco-item";
-    img.src = d.imageUrl;
+    const decoSrc = safeImg(d.imageUrl);
+    if (!decoSrc) return;
+    img.src = decoSrc;
     img.alt = "장식";
     img.dataset.id = d.id;
     const centerX = d.centerX != null ? d.centerX : 300;
@@ -210,11 +241,12 @@ function triggerDecoInteraction(d, img) {
     showSpeechBubble(img, quote);
   }
   if (d.soundUrl) {
-    const audio = new Audio(d.soundUrl);
-    audio.play().catch(() => {});
+    const snd = safeAudio(d.soundUrl);
+    if (snd) new Audio(snd).play().catch(() => {});
   }
-  if (d.linkUrl) {
-    window.open(d.linkUrl, "_blank", "noopener");
+  const link = safeHttpUrl(d.linkUrl);
+  if (link) {
+    window.open(link, "_blank", "noopener");
   }
 }
 
@@ -348,10 +380,10 @@ function renderQuestions() {
 
     const qBubble = document.createElement("div");
     qBubble.className = "bubble question";
-    if (q.imageUrl) {
+    if (safeImg(q.imageUrl)) {
       const img = document.createElement("img");
       img.className = "bubble-image";
-      img.src = q.imageUrl;
+      img.src = safeImg(q.imageUrl);
       img.alt = "첨부한 사진";
       qBubble.appendChild(img);
     }
@@ -372,16 +404,16 @@ function renderQuestions() {
       row.className = "answer-row";
 
       let img;
-      if (q.expressionImageUrl) {
+      if (safeImg(q.expressionImageUrl)) {
         img = document.createElement("img");
         img.className = "char-avatar-img";
-        img.src = q.expressionImageUrl;
+        img.src = safeImg(q.expressionImageUrl);
         img.alt = boxData.nickname || "";
       } else {
         img = document.createElement("div");
         img.className = "char-avatar";
-        if (boxData.avatarUrl) {
-          img.style.backgroundImage = `url(${boxData.avatarUrl})`;
+        if (safeImg(boxData.avatarUrl)) {
+          img.style.backgroundImage = cssUrl(boxData.avatarUrl);
         } else {
           img.textContent = (boxData.nickname || "?").charAt(0);
         }
@@ -727,7 +759,7 @@ function renderExprList() {
     const chip = document.createElement("span");
     chip.className = "expr-chip";
     const img = document.createElement("img");
-    img.src = expr.imageUrl;
+    img.src = safeImg(expr.imageUrl);
     img.alt = expr.label;
     chip.appendChild(img);
     const label = document.createElement("span");
@@ -777,7 +809,7 @@ function renderDecoList() {
     row.className = "deco-item-row";
 
     const img = document.createElement("img");
-    img.src = d.imageUrl;
+    img.src = safeImg(d.imageUrl);
     img.alt = "장식";
     row.appendChild(img);
 
@@ -828,6 +860,7 @@ function renderDecoList() {
     const linkInput = panel.querySelector('[data-field="linkUrl"]');
     linkInput.value = d.linkUrl || "";
     linkInput.addEventListener("input", () => { d.linkUrl = linkInput.value.trim(); });
+    /* 저장 직전에 normalizeHttpUrl로 한 번 더 정리됨 */
 
     const bounceInput = panel.querySelector('[data-field="bounce"]');
     bounceInput.checked = !!d.bounce;
@@ -970,7 +1003,7 @@ el("profileMenuItem").addEventListener("click", () => {
   el("profileError").hidden = true;
 
   el("avatarPreview").style.backgroundImage = el("mainAvatar").style.backgroundImage;
-  el("bgPreview").style.backgroundImage = boxData.bgUrl ? `url(${boxData.bgUrl})` : "none";
+  el("bgPreview").style.backgroundImage = cssUrl(boxData.bgUrl);
   el("nicknameInput").value = boxData.nickname || "";
   el("twitterInput").value = boxData.twitterUrl || "";
   el("bgmInput").value = boxData.bgmUrl || "";
@@ -1071,7 +1104,7 @@ el("profileSubmit").addEventListener("click", async () => {
 
   try {
     const nickname = el("nicknameInput").value.trim() || "이름 없음";
-    const twitterUrl = el("twitterInput").value.trim();
+    const twitterUrl = normalizeHttpUrl(el("twitterInput").value);
     const bgmUrl = el("bgmInput").value.trim();
     const activePreset = document.querySelector(".preset-btn.active");
     const activeColor = document.querySelector(".color-swatch.active");
@@ -1091,7 +1124,7 @@ el("profileSubmit").addEventListener("click", async () => {
       showTime,
       allowImageAttach,
       expressions: workingExpressions,
-      decorations: workingDecorations,
+      decorations: workingDecorations.map((d) => ({ ...d, linkUrl: normalizeHttpUrl(d.linkUrl) })),
     };
 
     if (selectedAvatarFile) {
@@ -1134,7 +1167,7 @@ function openAnswerModal(id, questionText, existingAnswer, existingExpressionIma
 
 function updateExpressionButton() {
   const url = selectedExpressionImageUrl || (boxData && boxData.avatarUrl);
-  el("expressionBtn").style.backgroundImage = url ? `url(${url})` : "none";
+  el("expressionBtn").style.backgroundImage = cssUrl(url);
   const match = (boxData && boxData.expressions || []).find((e) => e.imageUrl === selectedExpressionImageUrl);
   el("expressionLabel").textContent = match ? match.label : "기본";
 }
@@ -1160,7 +1193,7 @@ function renderExpressionPicker() {
     btn.type = "button";
     btn.classList.toggle("active", selectedExpressionImageUrl === expr.imageUrl);
     const img = document.createElement("img");
-    img.src = expr.imageUrl;
+    img.src = safeImg(expr.imageUrl);
     img.alt = expr.label;
     btn.appendChild(img);
     const span = document.createElement("span");
