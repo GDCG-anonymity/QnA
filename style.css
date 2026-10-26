@@ -437,21 +437,6 @@ html.halloween .modal { background: var(--surface); color: var(--ink); }
 }
 .hw-mode-btns button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-#hwCandy {
-  position: absolute; left: 0; right: 0; bottom: 0; max-height: 22px; overflow: hidden;
-  display: flex; flex-wrap: wrap-reverse; justify-content: center; align-items: flex-end;
-  padding: 0 6px; line-height: 1;
-}
-.hw-candy-item { font-size: 16px; display: inline-block; }
-.hw-candy-count {
-  font-size: 11px; color: var(--muted); margin-left: 6px; align-self: center;
-  background: var(--surface-2); border-radius: 10px; padding: 1px 7px;
-}
-@media (min-width: 481px) {
-  #hwCandy { max-height: 46px; }
-}
-html.hw-horror .hw-candy-item { filter: grayscale(0.85) brightness(0.7); opacity: 0.85; }
-
 html.hw-horror #app { box-shadow: 0 0 0 1px #2E2E33, 0 24px 60px rgba(139,26,26,0.28); }
 html.hw-horror .deco-sparkle { background: #B02A2A; box-shadow: 0 0 8px #B02A2A; }
 html.hw-horror .bubble.answer { border-color: #3A2A2A; }
@@ -487,3 +472,35 @@ html.hw-horror .hw-candy-btn { filter: grayscale(0.7); }
 }
 #hwCandyPop.show { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .hw-candy-btn.pop { animation: none; } }
+
+
+/* 어탐기: 어둠 속 두 눈 */
+.hw-eyes { position: absolute; display: flex; gap: 12px; opacity: 0; animation: hwEyes 4.2s ease-in-out forwards; }
+.hw-eyes span {
+  width: 9px; height: 6px; border-radius: 50%; background: #E9E4E4;
+  box-shadow: 0 0 8px rgba(255,255,255,0.55);
+}
+@keyframes hwEyes {
+  0%   { opacity: 0; transform: scaleY(1); }
+  20%  { opacity: 0.75; transform: scaleY(1); }
+  55%  { opacity: 0.75; transform: scaleY(1); }
+  60%  { opacity: 0.75; transform: scaleY(0.1); }
+  66%  { opacity: 0.75; transform: scaleY(1); }
+  85%  { opacity: 0.75; }
+  100% { opacity: 0; }
+}
+
+
+/* 어탐기: 흐릿하게 떠올랐다 사라지는 문장 (반투명, 클릭/읽기 방해 없음) */
+.hw-whisper {
+  position: absolute; transform: translateX(-50%); max-width: 80vw; text-align: center;
+  font-size: 14px; letter-spacing: 0.08em; color: #C9A0A0; opacity: 0; pointer-events: none;
+  text-shadow: 0 0 10px rgba(160,30,30,0.6);
+  animation: hwWhisper 6s ease-in-out forwards;
+}
+@keyframes hwWhisper {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.32; }
+  65%  { opacity: 0.32; }
+  100% { opacity: 0; }
+}

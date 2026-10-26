@@ -69,11 +69,21 @@ const DEFAULT_EMPTY = "아직 아무도 흥미로운 걸 안 물어봤군요.";
 /* 문구는 여기서만 바꾸면 돼요 */
 const HW_TEXT = {
   cute:   { placeholder: "Trick or Treat. 노스텔지어 사탕이 생각나는 하루에요  🎃", empty: DEFAULT_EMPTY },
-  horror: { placeholder: DEFAULT_PLACEHOLDER, empty: "아직 아무도 오지 않았어요... 탐사가 끝나지 않았나 봐요." },
+  horror: {
+    placeholder: DEFAULT_PLACEHOLDER,
+    empty: "아직 아무도 오지 않았어요... 탐사가 끝나지 않았나 봐요.",
+    tabAway: "이름님이 기다리신다",                 // 다른 탭으로 가 있을 때 탭 제목
+    statusAlt: "어둠탐사기록에 한 줄 적히는 중...",   // 상태 줄이 잠깐 바뀌는 문구
+    metaAlt: "오전 3:33",                            // 시간 표시가 잠깐 바뀌는 값 (임시 문구)
+    whispers: [                                      // 화면에 흐릿하게 떠올랐다 사라지는 문장
+      "이 세상은 이름님의 것.",
+      "오로지 이름님의 의지와 선택만이 의미가 있다.",
+      "죽더라도 이름님에게서 도망칠 수 없다.",
+      "영원한 해방이 다가온다",
+    ],
+  },
 };
 const HALLOWEEN_FLOATERS = ["🦇", "👻", "🎃", "🦇", "👻", "🕯️", "🦇"];
-const CANDY_EMOJIS = ["🍬", "🍭", "🍫", "🍬", "🍡"];
-const CANDY_MAX_SHOWN = 40;
 
 /* 사탕 = 이벤트 기간에 달린 질문 중 답변된 개수 (질문이 달린 날짜 기준) */
 function candyCount() {
@@ -84,28 +94,6 @@ function candyCount() {
     const t = q.createdAt && q.createdAt.toMillis ? q.createdAt.toMillis() : null;
     return t !== null && t >= start && t < end;
   }).length;
-}
-
-function updateCandyLayer() {
-  const box = document.getElementById("hwCandy");
-  if (!box) return;
-  const n = candyCount();
-  if (box.dataset.n === String(n)) return;
-  box.dataset.n = String(n);
-  box.textContent = "";
-  if (n === 0) return;
-  const shown = Math.min(n, CANDY_MAX_SHOWN);
-  for (let i = 0; i < shown; i++) {
-    const c = document.createElement("span");
-    c.className = "hw-candy-item";
-    c.textContent = CANDY_EMOJIS[i % CANDY_EMOJIS.length];
-    c.style.transform = `rotate(${((i * 37) % 50) - 25}deg)`;
-    box.appendChild(c);
-  }
-  const count = document.createElement("span");
-  count.className = "hw-candy-count";
-  count.textContent = `🍬 ${n}`;
-  box.appendChild(count);
 }
 
 function showCandyPop() {
@@ -163,15 +151,102 @@ function renderHalloweenLayer(mode) {
     v.className = "hw-vignette";
     layer.appendChild(v);
   }
-  const candy = document.createElement("div");
-  candy.id = "hwCandy";
-  layer.appendChild(candy);
   document.body.appendChild(layer);
-  updateCandyLayer();
 }
 
 document.addEventListener("click", (e) => {
   if (e.target.closest && e.target.closest("#hwCandyBtn")) showCandyPop();
+});
+
+/* ===== 어탐기 이스터에그 (아주 가끔, 한 번에 하나) ===== */
+const GLITCH_FORCE = params.get("glitch") === "1"; // 테스트용: 동작 줄이기 무시, 2초마다 발생
+function hauntReduced() {
+  return !GLITCH_FORCE && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+function hauntEyes() {
+  const layer = document.getElementById("halloweenLayer");
+  if (!layer) return;
+  const e = document.createElement("div");
+  e.className = "hw-eyes";
+  e.style.left = (6 + Math.random() * 80) + "%";
+  e.style.top = (14 + Math.random() * 66) + "%";
+  e.appendChild(document.createElement("span"));
+  e.appendChild(document.createElement("span"));
+  layer.appendChild(e);
+  setTimeout(() => e.remove(), 4300);
+}
+function hauntWhisper() {
+  const layer = document.getElementById("halloweenLayer");
+  const list = HW_TEXT.horror.whispers;
+  if (!layer || !list || !list.length) return;
+  const w = document.createElement("div");
+  w.className = "hw-whisper";
+  w.textContent = list[Math.floor(Math.random() * list.length)];
+  w.style.top = (18 + Math.random() * 58) + "%";
+  w.style.left = (50 + (Math.random() - 0.5) * 20) + "%";
+  layer.appendChild(w);
+  setTimeout(() => w.remove(), 6200);
+}
+function hauntStatus() {
+  const n = document.getElementById("statusLine");
+  if (!n || n.dataset.alt) return;
+  const orig = n.textContent;
+  const alt = HW_TEXT.horror.statusAlt;
+  n.dataset.alt = "1";
+  n.textContent = alt;
+  setTimeout(() => {
+    if (n.textContent === alt) n.textContent = orig;
+    delete n.dataset.alt;
+  }, 1500);
+}
+function hauntTime() {
+  const feed = document.getElementById("chatFeed");
+  if (!feed) return;
+  const fr = feed.getBoundingClientRect();
+  const nodes = Array.from(document.querySelectorAll(".meta")).filter((n) => {
+    const r = n.getBoundingClientRect();
+    return r.height > 0 && r.bottom > fr.top + 4 && r.top < fr.bottom - 4 && /(오전|오후)\s*\d{1,2}:\d{2}/.test(n.textContent);
+  });
+  if (!nodes.length) return;
+  const n = nodes[Math.floor(Math.random() * nodes.length)];
+  if (n.dataset.alt) return;
+  const orig = n.textContent;
+  const alt = orig.replace(/(오전|오후)\s*\d{1,2}:\d{2}/, HW_TEXT.horror.metaAlt);
+  n.dataset.alt = "1";
+  n.textContent = alt;
+  setTimeout(() => {
+    if (n.textContent === alt) n.textContent = orig;
+    delete n.dataset.alt;
+  }, 1600);
+}
+let hauntTick = 0;
+function scheduleHaunt() {
+  const delay = GLITCH_FORCE ? 3000 : 18000 + Math.random() * 22000;
+  setTimeout(() => {
+    if (document.documentElement.classList.contains("hw-horror") && !document.hidden && !hauntReduced()) {
+      const events = [hauntEyes, hauntWhisper, hauntStatus, hauntTime];
+      const pick = GLITCH_FORCE ? events[hauntTick++ % events.length] : events[Math.floor(Math.random() * events.length)];
+      pick();
+    }
+    scheduleHaunt();
+  }, delay);
+}
+scheduleHaunt();
+
+/* 탭을 떠나 있는 동안 탭 제목이 바뀜 */
+let titleBackup = null;
+document.addEventListener("visibilitychange", () => {
+  if (!document.documentElement.classList.contains("hw-horror")) {
+    if (titleBackup !== null) { document.title = titleBackup; titleBackup = null; }
+    return;
+  }
+  if (document.hidden) {
+    titleBackup = document.title;
+    document.title = HW_TEXT.horror.tabAway;
+  } else if (titleBackup !== null) {
+    document.title = titleBackup;
+    titleBackup = null;
+  }
 });
 
 /* 어탐기 모드: 가끔, 한 번에 하나의 말풍선 글자가 잠깐 깨졌다 돌아와요 */
@@ -199,7 +274,6 @@ function glitchOnce(node) {
   };
   step();
 }
-const GLITCH_FORCE = params.get("glitch") === "1"; // 테스트용: 동작 줄이기 무시, 2초마다 발생
 function visibleGlitchNodes() {
   const feed = document.getElementById("chatFeed");
   if (!feed) return [];
@@ -578,8 +652,6 @@ function renderQuestions() {
   feed.innerHTML = "";
 
   if (!boxData) return;
-
-  updateCandyLayer();
 
   if (cachedQuestions.length === 0) {
     const hwm = halloweenMode(boxData);
