@@ -183,7 +183,7 @@ function hauntWhisper() {
   w.className = "hw-whisper";
   w.textContent = list[Math.floor(Math.random() * list.length)];
   w.style.top = (18 + Math.random() * 58) + "%";
-  w.style.left = (50 + (Math.random() - 0.5) * 20) + "%";
+  w.style.left = (50 + (Math.random() - 0.5) * 12) + "%";
   layer.appendChild(w);
   setTimeout(() => w.remove(), 6200);
 }
@@ -284,10 +284,10 @@ function visibleGlitchNodes() {
   });
 }
 function scheduleGlitch(first) {
-  const delay = GLITCH_FORCE ? 2000 : (first ? 3000 : 5000 + Math.random() * 5000);
+  const delay = GLITCH_FORCE ? 2000 : (first ? 2500 : 2500 + Math.random() * 3000);
   setTimeout(() => {
     const reduced = !GLITCH_FORCE && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (document.documentElement.classList.contains("hw-horror") && !document.hidden && !reduced && (GLITCH_FORCE || Math.random() < 0.75)) {
+    if (document.documentElement.classList.contains("hw-horror") && !document.hidden && !reduced && (GLITCH_FORCE || Math.random() < 0.9)) {
       const nodes = visibleGlitchNodes();
       if (nodes.length) glitchOnce(nodes[Math.floor(Math.random() * nodes.length)]);
     }

@@ -493,14 +493,15 @@ html.hw-horror .hw-candy-btn { filter: grayscale(0.7); }
 
 /* 어탐기: 흐릿하게 떠올랐다 사라지는 문장 (반투명, 클릭/읽기 방해 없음) */
 .hw-whisper {
-  position: absolute; transform: translateX(-50%); max-width: 80vw; text-align: center;
-  font-size: 14px; letter-spacing: 0.08em; color: #C9A0A0; opacity: 0; pointer-events: none;
-  text-shadow: 0 0 10px rgba(160,30,30,0.6);
+  position: absolute; transform: translateX(-50%); width: min(460px, 84vw); text-align: center;
+  font-size: 15px; font-weight: 500; letter-spacing: 0.06em; line-height: 1.5;
+  color: #E6BDBD; opacity: 0; pointer-events: none;
+  text-shadow: 0 0 6px rgba(0,0,0,0.95), 0 0 16px rgba(170,30,30,0.7);
   animation: hwWhisper 6s ease-in-out forwards;
 }
 @keyframes hwWhisper {
   0%   { opacity: 0; }
-  30%  { opacity: 0.32; }
-  65%  { opacity: 0.32; }
+  30%  { opacity: 0.6; }
+  65%  { opacity: 0.6; }
   100% { opacity: 0; }
 }
