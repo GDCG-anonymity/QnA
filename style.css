@@ -468,3 +468,22 @@ html.hw-cute  #app { box-shadow: 0 0 0 1px #4A3166, 0 24px 60px rgba(232,104,10,
 @media (prefers-reduced-motion: reduce) {
   .hw-vignette { animation: none; }
 }
+
+
+/* 잭오랜턴 버튼 + 사탕 개수 말풍선 */
+.hw-candy-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent;
+  font-size: 18px; line-height: 1; cursor: pointer; padding: 0; flex-shrink: 0;
+}
+.hw-candy-btn:hover { background: rgba(255,255,255,0.12); }
+.hw-candy-btn.pop { animation: hwPop 0.4s ease; }
+@keyframes hwPop { 0% { transform: scale(1); } 40% { transform: scale(1.35) rotate(-8deg); } 100% { transform: scale(1); } }
+html.hw-horror .hw-candy-btn { filter: grayscale(0.7); }
+#hwCandyPop {
+  position: fixed; z-index: 30; transform: translateX(-50%);
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 12px; padding: 6px 12px; font-size: 14px;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+#hwCandyPop.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .hw-candy-btn.pop { animation: none; } }

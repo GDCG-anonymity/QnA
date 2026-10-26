@@ -108,6 +108,26 @@ function updateCandyLayer() {
   box.appendChild(count);
 }
 
+function showCandyPop() {
+  let pop = document.getElementById("hwCandyPop");
+  if (!pop) {
+    pop = document.createElement("div");
+    pop.id = "hwCandyPop";
+    document.body.appendChild(pop);
+  }
+  pop.textContent = `🍬 ${candyCount()}`;
+  const r = el("hwCandyBtn").getBoundingClientRect();
+  pop.style.left = (r.left + r.width / 2) + "px";
+  pop.style.top = (r.bottom + 8) + "px";
+  pop.classList.add("show");
+  clearTimeout(pop._t);
+  pop._t = setTimeout(() => pop.classList.remove("show"), 2600);
+  const btn = el("hwCandyBtn");
+  btn.classList.remove("pop");
+  void btn.offsetWidth;
+  btn.classList.add("pop");
+}
+
 function renderHalloweenLayer(mode) {
   const root = document.documentElement;
   root.classList.toggle("halloween", mode !== "off");
@@ -150,6 +170,10 @@ function renderHalloweenLayer(mode) {
   updateCandyLayer();
 }
 
+document.addEventListener("click", (e) => {
+  if (e.target.closest && e.target.closest("#hwCandyBtn")) showCandyPop();
+});
+
 /* 어탐기 모드: 가끔, 한 번에 하나의 말풍선 글자가 잠깐 깨졌다 돌아와요 */
 const GLITCH_CHARS = "█▓▒░#@%&?¡Ж§";
 function glitchOnce(node) {
@@ -161,32 +185,42 @@ function glitchOnce(node) {
   let frame = 0;
   const step = () => {
     if (!node.isConnected) return;
-    if (frame >= 4) {
+    if (frame >= 6) {
       node.textContent = orig;
       node.classList.remove("glitching");
       delete node.dataset.orig;
       return;
     }
     node.textContent = Array.from(orig).map((ch) =>
-      (ch.trim() && Math.random() < 0.18) ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)] : ch
+      (ch.trim() && Math.random() < 0.24) ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)] : ch
     ).join("");
     frame++;
-    setTimeout(step, 140);
+    setTimeout(step, 130);
   };
   step();
 }
-function scheduleGlitch() {
-  const delay = 6000 + Math.random() * 6000;
+const GLITCH_FORCE = params.get("glitch") === "1"; // 테스트용: 동작 줄이기 무시, 2초마다 발생
+function visibleGlitchNodes() {
+  const feed = document.getElementById("chatFeed");
+  if (!feed) return [];
+  const fr = feed.getBoundingClientRect();
+  return Array.from(document.querySelectorAll(".glitchable")).filter((n) => {
+    const r = n.getBoundingClientRect();
+    return r.height > 0 && r.bottom > fr.top + 4 && r.top < fr.bottom - 4;
+  });
+}
+function scheduleGlitch(first) {
+  const delay = GLITCH_FORCE ? 2000 : (first ? 3000 : 5000 + Math.random() * 5000);
   setTimeout(() => {
-    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (document.documentElement.classList.contains("hw-horror") && !document.hidden && !reduced && Math.random() < 0.6) {
-      const nodes = document.querySelectorAll(".glitchable");
+    const reduced = !GLITCH_FORCE && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (document.documentElement.classList.contains("hw-horror") && !document.hidden && !reduced && (GLITCH_FORCE || Math.random() < 0.75)) {
+      const nodes = visibleGlitchNodes();
       if (nodes.length) glitchOnce(nodes[Math.floor(Math.random() * nodes.length)]);
     }
-    scheduleGlitch();
+    scheduleGlitch(false);
   }, delay);
 }
-scheduleGlitch();
+scheduleGlitch(true);
 
 if (!boxId || !BOX_ID_RE.test(boxId)) {
   document.body.innerHTML = '<p style="padding:40px 20px; text-align:center; color:#78766F;">잘못된 링크예요. 익명함 주소를 다시 확인해주세요.</p>';
@@ -482,6 +516,7 @@ function applyTheme(box) {
     root.removeProperty("--success");
   }
   renderHalloweenLayer(hwMode);
+  el("hwCandyBtn").hidden = hwMode === "off";
   el("questionInput").placeholder = hwMode === "off" ? DEFAULT_PLACEHOLDER : HW_TEXT[hwMode].placeholder;
 
   if (box.theme === "disaster") {
