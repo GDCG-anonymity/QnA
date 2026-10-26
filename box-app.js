@@ -41,6 +41,153 @@ function normalizeHttpUrl(raw) {
   return safeHttpUrl(/^[a-z][a-z0-9+.-]*:/i.test(t) ? t : "https://" + t);
 }
 
+/* ===== 할로윈 이벤트 (10/28 ~ 11/1, 한국 시간 기준) ===== */
+const HW_PREVIEW = params.get("hw") === "1"; // 미리보기용 (?id=...&hw=1) - 내 화면에서만 적용
+function hwBounds() {
+  const y = new Date(Date.now() + 9 * 3600 * 1000).getUTCFullYear();
+  return {
+    start: Date.parse(`${y}-10-28T00:00:00+09:00`),
+    end: Date.parse(`${y}-11-02T00:00:00+09:00`),
+  };
+}
+function isHalloweenWindow() {
+  if (HW_PREVIEW) return true;
+  const { start, end } = hwBounds();
+  const now = Date.now();
+  return now >= start && now < end;
+}
+/* "cute"(할로윈) | "horror"(어탐기) | "off"(끔) */
+function halloweenMode(box) {
+  if (!box || !isHalloweenWindow()) return "off";
+  const m = box.halloweenMode || (box.halloweenOn === true ? "cute" : "off");
+  return (m === "cute" || m === "horror") ? m : "off";
+}
+function halloweenActive(box) { return halloweenMode(box) !== "off"; }
+
+const DEFAULT_PLACEHOLDER = "익명 메시지를 입력하세요";
+const DEFAULT_EMPTY = "아직 아무도 흥미로운 걸 안 물어봤군요.";
+/* 문구는 여기서만 바꾸면 돼요 */
+const HW_TEXT = {
+  cute:   { placeholder: "Trick or Treat. 노스텔지어 사탕이 생각나는 하루에요  🎃", empty: DEFAULT_EMPTY },
+  horror: { placeholder: DEFAULT_PLACEHOLDER, empty: "아직 아무도 오지 않았어요... 탐사가 끝나지 않았나 봐요." },
+};
+const HALLOWEEN_FLOATERS = ["🦇", "👻", "🎃", "🦇", "👻", "🕯️", "🦇"];
+const CANDY_EMOJIS = ["🍬", "🍭", "🍫", "🍬", "🍡"];
+const CANDY_MAX_SHOWN = 40;
+
+/* 사탕 = 이벤트 기간에 달린 질문 중 답변된 개수 (질문이 달린 날짜 기준) */
+function candyCount() {
+  const { start, end } = hwBounds();
+  return cachedQuestions.filter((q) => {
+    if (!q.answer) return false;
+    if (HW_PREVIEW) return true;
+    const t = q.createdAt && q.createdAt.toMillis ? q.createdAt.toMillis() : null;
+    return t !== null && t >= start && t < end;
+  }).length;
+}
+
+function updateCandyLayer() {
+  const box = document.getElementById("hwCandy");
+  if (!box) return;
+  const n = candyCount();
+  if (box.dataset.n === String(n)) return;
+  box.dataset.n = String(n);
+  box.textContent = "";
+  if (n === 0) return;
+  const shown = Math.min(n, CANDY_MAX_SHOWN);
+  for (let i = 0; i < shown; i++) {
+    const c = document.createElement("span");
+    c.className = "hw-candy-item";
+    c.textContent = CANDY_EMOJIS[i % CANDY_EMOJIS.length];
+    c.style.transform = `rotate(${((i * 37) % 50) - 25}deg)`;
+    box.appendChild(c);
+  }
+  const count = document.createElement("span");
+  count.className = "hw-candy-count";
+  count.textContent = `🍬 ${n}`;
+  box.appendChild(count);
+}
+
+function renderHalloweenLayer(mode) {
+  const root = document.documentElement;
+  root.classList.toggle("halloween", mode !== "off");
+  root.classList.toggle("hw-cute", mode === "cute");
+  root.classList.toggle("hw-horror", mode === "horror");
+  let layer = document.getElementById("halloweenLayer");
+  if (mode === "off") { if (layer) layer.remove(); return; }
+  if (layer && layer.dataset.mode === mode) return;
+  if (layer) layer.remove();
+  layer = document.createElement("div");
+  layer.id = "halloweenLayer";
+  layer.dataset.mode = mode;
+  layer.setAttribute("aria-hidden", "true");
+  if (mode === "cute") {
+    ["tl", "tr"].forEach((pos) => {
+      const web = document.createElement("span");
+      web.className = "hw-web hw-web-" + pos;
+      web.textContent = "🕸️";
+      layer.appendChild(web);
+    });
+    HALLOWEEN_FLOATERS.forEach((emoji, i) => {
+      const f = document.createElement("span");
+      f.className = "hw-floater";
+      f.textContent = emoji;
+      f.style.left = (8 + i * 13) + "%";
+      f.style.fontSize = (20 + (i % 3) * 8) + "px";
+      f.style.animationDuration = (14 + (i * 3) % 9) + "s";
+      f.style.animationDelay = (-i * 2.3) + "s";
+      layer.appendChild(f);
+    });
+  } else {
+    const v = document.createElement("div");
+    v.className = "hw-vignette";
+    layer.appendChild(v);
+  }
+  const candy = document.createElement("div");
+  candy.id = "hwCandy";
+  layer.appendChild(candy);
+  document.body.appendChild(layer);
+  updateCandyLayer();
+}
+
+/* 어탐기 모드: 가끔, 한 번에 하나의 말풍선 글자가 잠깐 깨졌다 돌아와요 */
+const GLITCH_CHARS = "█▓▒░#@%&?¡Ж§";
+function glitchOnce(node) {
+  if (!node || !node.isConnected || node.dataset.orig !== undefined) return;
+  const orig = node.textContent;
+  if (!orig || orig.length < 2) return;
+  node.dataset.orig = orig;
+  node.classList.add("glitching");
+  let frame = 0;
+  const step = () => {
+    if (!node.isConnected) return;
+    if (frame >= 4) {
+      node.textContent = orig;
+      node.classList.remove("glitching");
+      delete node.dataset.orig;
+      return;
+    }
+    node.textContent = Array.from(orig).map((ch) =>
+      (ch.trim() && Math.random() < 0.18) ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)] : ch
+    ).join("");
+    frame++;
+    setTimeout(step, 140);
+  };
+  step();
+}
+function scheduleGlitch() {
+  const delay = 6000 + Math.random() * 6000;
+  setTimeout(() => {
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (document.documentElement.classList.contains("hw-horror") && !document.hidden && !reduced && Math.random() < 0.6) {
+      const nodes = document.querySelectorAll(".glitchable");
+      if (nodes.length) glitchOnce(nodes[Math.floor(Math.random() * nodes.length)]);
+    }
+    scheduleGlitch();
+  }, delay);
+}
+scheduleGlitch();
+
 if (!boxId || !BOX_ID_RE.test(boxId)) {
   document.body.innerHTML = '<p style="padding:40px 20px; text-align:center; color:#78766F;">잘못된 링크예요. 익명함 주소를 다시 확인해주세요.</p>';
   throw new Error("no box id");
@@ -174,7 +321,7 @@ boxRef.onSnapshot((doc) => {
   }
 
   if (safeImg(boxData.bgUrl)) {
-    el("app").style.backgroundImage = `linear-gradient(rgba(255,255,255,0.82), rgba(255,255,255,0.82)), ${cssUrl(boxData.bgUrl)}`;
+    el("app").style.backgroundImage = `linear-gradient(${{ cute: "rgba(21,11,34,0.84), rgba(21,11,34,0.84)", horror: "rgba(7,7,8,0.9), rgba(7,7,8,0.9)", off: "rgba(255,255,255,0.82), rgba(255,255,255,0.82)" }[halloweenMode(boxData)]}), ${cssUrl(boxData.bgUrl)}`;
     el("app").style.backgroundSize = "cover, cover";
     el("app").style.backgroundPosition = "center, center";
   } else {
@@ -307,6 +454,36 @@ function applyTheme(box) {
     root.removeProperty("--surface-2");
     root.removeProperty("--line");
   }
+  const hwMode = halloweenMode(box);
+  if (hwMode === "cute") {
+    root.setProperty("--accent", "#E8680A");
+    root.setProperty("--accent-hover", "#C85606");
+    root.setProperty("--page", "#150B22");
+    root.setProperty("--surface", "#21132F");
+    root.setProperty("--surface-2", "#2E1B43");
+    root.setProperty("--line", "#4A3166");
+    root.setProperty("--ink", "#F5ECFF");
+    root.setProperty("--muted", "#B9A5D3");
+    root.setProperty("--success", "#FFB23E");
+  } else if (hwMode === "horror") {
+    root.setProperty("--accent", "#8B1A1A");
+    root.setProperty("--accent-hover", "#6E1414");
+    root.setProperty("--page", "#070708");
+    root.setProperty("--surface", "#101012");
+    root.setProperty("--surface-2", "#19191C");
+    root.setProperty("--line", "#2E2E33");
+    root.setProperty("--ink", "#DADADD");
+    root.setProperty("--muted", "#85858C");
+    root.setProperty("--success", "#B04040");
+  } else {
+    root.removeProperty("--accent-hover");
+    root.removeProperty("--ink");
+    root.removeProperty("--muted");
+    root.removeProperty("--success");
+  }
+  renderHalloweenLayer(hwMode);
+  el("questionInput").placeholder = hwMode === "off" ? DEFAULT_PLACEHOLDER : HW_TEXT[hwMode].placeholder;
+
   if (box.theme === "disaster") {
     el("workspaceLogo").src = "disaster_logo.png";
     el("workspaceName").textContent = "초자연 재난관리국";
@@ -367,8 +544,14 @@ function renderQuestions() {
 
   if (!boxData) return;
 
+  updateCandyLayer();
+
   if (cachedQuestions.length === 0) {
-    feed.innerHTML = '<p class="empty-state">아직 아무도 흥미로운 걸 안 물어봤군요.</p>';
+    const hwm = halloweenMode(boxData);
+    const emptyP = document.createElement("p");
+    emptyP.className = "empty-state";
+    emptyP.textContent = hwm === "off" ? DEFAULT_EMPTY : HW_TEXT[hwm].empty;
+    feed.appendChild(emptyP);
     return;
   }
 
@@ -388,6 +571,7 @@ function renderQuestions() {
       qBubble.appendChild(img);
     }
     const qText = document.createElement("span");
+    qText.className = "glitchable";
     qText.textContent = q.text;
     qBubble.appendChild(qText);
     block.appendChild(qBubble);
@@ -421,7 +605,7 @@ function renderQuestions() {
       row.appendChild(img);
 
       const aBubble = document.createElement("div");
-      aBubble.className = "bubble answer";
+      aBubble.className = "bubble answer glitchable";
       aBubble.textContent = q.answer;
       row.appendChild(aBubble);
 
@@ -1030,6 +1214,9 @@ el("profileMenuItem").addEventListener("click", () => {
   const showTime = boxData.showTime !== false;
   el("showTimeToggle").setAttribute("aria-pressed", showTime ? "true" : "false");
   el("allowImageToggle").setAttribute("aria-pressed", boxData.allowImageAttach ? "true" : "false");
+  el("halloweenRow").hidden = !isHalloweenWindow();
+  const curMode = boxData.halloweenMode || (boxData.halloweenOn === true ? "cute" : "off");
+  el("halloweenModeBtns").querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.mode === curMode));
 
   el("profileBackdrop").classList.add("open");
 });
@@ -1068,6 +1255,13 @@ document.querySelectorAll(".color-swatch").forEach((b) => {
 el("showTimeToggle").addEventListener("click", () => {
   const pressed = el("showTimeToggle").getAttribute("aria-pressed") === "true";
   el("showTimeToggle").setAttribute("aria-pressed", pressed ? "false" : "true");
+});
+
+el("halloweenModeBtns").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  el("halloweenModeBtns").querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+  b.classList.add("active");
 });
 
 el("allowImageToggle").addEventListener("click", () => {
@@ -1126,6 +1320,12 @@ el("profileSubmit").addEventListener("click", async () => {
       expressions: workingExpressions,
       decorations: workingDecorations.map((d) => ({ ...d, linkUrl: normalizeHttpUrl(d.linkUrl) })),
     };
+
+    if (!el("halloweenRow").hidden) {
+      const activeMode = el("halloweenModeBtns").querySelector("button.active");
+      update.halloweenMode = activeMode ? activeMode.dataset.mode : "off";
+      if (boxData.halloweenOn !== undefined) update.halloweenOn = firebase.firestore.FieldValue.delete();
+    }
 
     if (selectedAvatarFile) {
       update.avatarUrl = await resizeImageToDataUrl(selectedAvatarFile, 240, 0.85, "png");

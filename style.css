@@ -395,3 +395,76 @@ html, body {
   opacity: 0; transition: opacity 0.2s; pointer-events: none;
 }
 .deco-speech-bubble.show { opacity: 1; }
+
+
+/* ===== 할로윈 오버레이 (halloween 클래스가 html에 붙을 때만) ===== */
+#halloweenLayer { position: fixed; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; }
+.hw-web { position: absolute; top: -6px; font-size: 64px; opacity: 0.55; line-height: 1; }
+.hw-web-tl { left: -6px; }
+.hw-web-tr { right: -6px; transform: scaleX(-1); }
+.hw-floater {
+  position: absolute; bottom: -40px; opacity: 0.0;
+  animation: hwFloat 16s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(232,104,10,0.55));
+}
+@keyframes hwFloat {
+  0%   { transform: translate(0, 0) rotate(-6deg); opacity: 0; }
+  10%  { opacity: 0.8; }
+  50%  { transform: translate(24px, -50vh) rotate(6deg); }
+  90%  { opacity: 0.8; }
+  100% { transform: translate(-12px, -110vh) rotate(-4deg); opacity: 0; }
+}
+html.halloween .deco-sparkle { background: #FF8A1F; box-shadow: 0 0 8px #FF8A1F; }
+html.halloween #app { box-shadow: 0 0 0 1px #4A3166, 0 24px 60px rgba(232,104,10,0.18); }
+html.halloween .bubble.answer { border-color: #6A4A93; }
+html.halloween input[type="text"], html.halloween input[type="password"], html.halloween textarea {
+  background: var(--surface-2); color: var(--ink);
+}
+html.halloween ::placeholder { color: var(--muted); opacity: 1; }
+html.halloween .modal { background: var(--surface); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) {
+  .hw-floater { animation: none; opacity: 0.6; bottom: 20px; }
+}
+
+
+/* ===== 할로윈: 모드 선택 / 사탕 / 어탐기 ===== */
+.hw-mode-row { margin-top: 16px; }
+.hw-mode-row > span { display: block; font-size: 13px; margin-bottom: 8px; }
+.hw-mode-btns { display: flex; gap: 6px; }
+.hw-mode-btns button {
+  flex: 1; padding: 8px 0; font-size: 13px; font-family: inherit; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink);
+}
+.hw-mode-btns button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+#hwCandy {
+  position: absolute; left: 0; right: 0; bottom: 0; max-height: 22px; overflow: hidden;
+  display: flex; flex-wrap: wrap-reverse; justify-content: center; align-items: flex-end;
+  padding: 0 6px; line-height: 1;
+}
+.hw-candy-item { font-size: 16px; display: inline-block; }
+.hw-candy-count {
+  font-size: 11px; color: var(--muted); margin-left: 6px; align-self: center;
+  background: var(--surface-2); border-radius: 10px; padding: 1px 7px;
+}
+@media (min-width: 481px) {
+  #hwCandy { max-height: 46px; }
+}
+html.hw-horror .hw-candy-item { filter: grayscale(0.85) brightness(0.7); opacity: 0.85; }
+
+html.hw-horror #app { box-shadow: 0 0 0 1px #2E2E33, 0 24px 60px rgba(139,26,26,0.28); }
+html.hw-horror .deco-sparkle { background: #B02A2A; box-shadow: 0 0 8px #B02A2A; }
+html.hw-horror .bubble.answer { border-color: #3A2A2A; }
+html.hw-cute  #app { box-shadow: 0 0 0 1px #4A3166, 0 24px 60px rgba(232,104,10,0.18); }
+
+.hw-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+  animation: hwBreathe 7s ease-in-out infinite;
+}
+@keyframes hwBreathe { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+
+.glitching { text-shadow: 2px 0 rgba(255,0,60,0.65), -2px 0 rgba(0,200,255,0.45); }
+@media (prefers-reduced-motion: reduce) {
+  .hw-vignette { animation: none; }
+}
